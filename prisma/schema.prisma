@@ -1,0 +1,517 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://root:123456789@localhost:3306/ecommerce"
+}
+
+model User {
+  id                        Int       @id @default(autoincrement())
+  fullName                  String    @db.VarChar(255)
+  email                     String    @unique @db.VarChar(255)
+  phone                     String    @unique @db.VarChar(255)
+  password                  String    @db.VarChar(255)
+  profilePicture            String?   @db.VarChar(255)
+  role                      Role      @default(customer)
+  isActive                  Boolean   @default(true)
+  isEmailVerified           Boolean   @default(false)
+  isPhoneVerified           Boolean   @default(false)
+  emailVerificationToken    String?   @db.VarChar(255)
+  phoneVerificationOTP      String?   @db.VarChar(255)
+  phoneVerificationOTPExpiry DateTime?
+  resetPasswordToken        String?   @db.VarChar(255)
+  resetPasswordExpiry       DateTime?
+  googleId                  String?   @db.VarChar(255)
+  facebookId                String?   @db.VarChar(255)
+  notificationEmail         Boolean   @default(true)
+  notificationSms           Boolean   @default(true)
+  notificationPush          Boolean   @default(true)
+  currency                  String    @default("USD") @db.VarChar(10)
+  language                  String    @default("en") @db.VarChar(10)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  // Relations
+  addresses                 Address[]
+  cart                      Cart?
+  wishlist                  Wishlist?
+  orders                    Order[]
+  printOrders               PrintOrder[]
+  reviews                   Review[]
+  notifications             Notification[]
+  vendorProducts            Product[] @relation("VendorProducts")
+  refreshTokens             RefreshToken[]
+  customizations            Customization[]
+  chatRoom                  ChatRoom?
+
+  @@map("users")
+}
+
+model Address {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  type         AddressType @default(home)
+  fullName     String   @db.VarChar(255)
+  phone        String?  @db.VarChar(255)
+  addressLine1 String   @db.VarChar(255)
+  addressLine2 String?  @db.VarChar(255)
+  city         String   @db.VarChar(255)
+  state        String   @db.VarChar(255)
+  zipCode      String   @db.VarChar(255)
+  country      String   @db.VarChar(255)
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("addresses")
+}
+
+model Category {
+  id              Int       @id @default(autoincrement())
+  name            String    @unique @db.VarChar(255)
+  slug            String    @unique @db.VarChar(255)
+  description     String?   @db.Text
+  image           String?   @db.VarChar(255)
+  parentCategoryId Int?
+  type            CategoryType
+  icon            String?   @db.VarChar(255)
+  isActive        Boolean   @default(true)
+  sortOrder       Int       @default(0)
+  metaTitle       String?   @db.VarChar(255)
+  metaDescription String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  parentCategory  Category? @relation("CategoryParent", fields: [parentCategoryId], references: [id], onDelete: SetNull)
+  subCategories   Category[] @relation("CategoryParent")
+  products        Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id                  Int       @id @default(autoincrement())
+  name                String    @db.VarChar(255)
+  slug                String    @unique @db.VarChar(255)
+  description         String    @db.Text
+  shortDescription    String?   @db.Text
+  categoryId           Int
+  subcategory         String?   @db.VarChar(255)
+  images              Json?
+  price               Decimal   @db.Decimal(10, 2)
+  compareAtPrice      Decimal?  @db.Decimal(10, 2)
+  costPrice           Decimal?  @db.Decimal(10, 2)
+  sku                 String?   @unique @db.VarChar(255)
+  barcode             String?   @db.VarChar(255)
+  stockQuantity       Int       @default(0)
+  trackQuantity       Boolean   @default(true)
+  lowStockThreshold   Int       @default(10)
+  availability        Availability @default(in_stock)
+  status              ProductStatus @default(active)
+  type                ProductType
+  bookDetails         Json?
+  printedItemDetails  Json?
+  weight              Decimal?  @db.Decimal(10, 2)
+  dimensions          Json?
+  ratingAverage       Decimal   @default(0) @db.Decimal(3, 2)
+  ratingCount         Int       @default(0)
+  reviewsCount        Int       @default(0)
+  soldCount           Int       @default(0)
+  viewCount           Int       @default(0)
+  featured            Boolean   @default(false)
+  tags                Json?
+  metaTitle           String?   @db.VarChar(255)
+  metaDescription     String?   @db.Text
+  vendorId            Int?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  category            Category   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  vendor              User?      @relation("VendorProducts", fields: [vendorId], references: [id], onDelete: SetNull)
+  cartItems           CartItem[]
+  orderItems          OrderItem[]
+  reviews             Review[]
+  wishlistItems       WishlistItem[]
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([type])
+  @@index([slug])
+  @@index([price])
+  @@index([ratingAverage])
+  @@map("products")
+}
+
+model Cart {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @unique
+  sessionId String?   @db.VarChar(255)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        Int       @id @default(autoincrement())
+  cartId    Int
+  productId Int
+  quantity  Int       @default(1)
+  price     Decimal   @db.Decimal(10, 2)
+  variant   Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  cart      Cart      @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("cart_items")
+}
+
+model Order {
+  id                Int       @id @default(autoincrement())
+  orderNumber       String    @unique @db.VarChar(255)
+  userId            Int
+  shippingAddress   Json
+  billingAddress    Json
+  subtotal          Decimal   @db.Decimal(10, 2)
+  shippingCost      Decimal   @default(0) @db.Decimal(10, 2)
+  tax               Decimal   @default(0) @db.Decimal(10, 2)
+  discount          Decimal   @default(0) @db.Decimal(10, 2)
+  couponCode        String?   @db.VarChar(255)
+  total             Decimal   @db.Decimal(10, 2)
+  paymentMethod     PaymentMethod
+  paymentStatus     PaymentStatus @default(pending)
+  paymentId         String?   @db.VarChar(255)
+  orderStatus       OrderStatus @default(pending)
+  statusHistory     Json?
+  shippingMethod    String?   @db.VarChar(255)
+  trackingNumber    String?   @db.VarChar(255)
+  trackingUrl       String?   @db.VarChar(255)
+  estimatedDelivery DateTime?
+  deliveredAt       DateTime?
+  cancelledAt       DateTime?
+  cancellationReason String?   @db.Text
+  notes             String?   @db.Text
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user              User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items             OrderItem[]
+  reviews           Review[]
+
+  @@index([userId])
+  @@index([orderNumber])
+  @@index([orderStatus])
+  @@index([paymentStatus])
+  @@map("orders")
+}
+
+model PrintOrder {
+  id          Int              @id @default(autoincrement())
+  userId      Int
+  fileUrl     String           @db.VarChar(500)
+  fileName    String           @db.VarChar(255)
+  copies      Int              @default(1)
+  details     String?          @db.Text
+  status      PrintOrderStatus @default(pending)
+  rejectionReason String?      @db.Text
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("print_orders")
+}
+
+enum PrintOrderStatus {
+  pending
+  approved
+  rejected
+  completed
+}
+
+
+model OrderItem {
+  id        Int       @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  name      String    @db.VarChar(255)
+  image     String?   @db.VarChar(255)
+  quantity  Int
+  price     Decimal   @db.Decimal(10, 2)
+  total     Decimal   @db.Decimal(10, 2)
+  variant   Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@map("order_items")
+}
+
+model Review {
+  id                Int       @id @default(autoincrement())
+  userId            Int
+  productId         Int
+  orderId           Int?
+  rating            Int
+  title             String?   @db.VarChar(255)
+  comment           String?   @db.Text
+  images            Json?
+  isVerifiedPurchase Boolean  @default(false)
+  isApproved        Boolean   @default(false)
+  helpfulCount      Int       @default(0)
+  helpfulUsers      Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product           Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order             Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, productId])
+  @@index([productId, isApproved])
+  @@map("reviews")
+}
+
+model Wishlist {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     WishlistItem[]
+
+  @@map("wishlists")
+}
+
+model WishlistItem {
+  id         Int       @id @default(autoincrement())
+  wishlistId Int
+  productId  Int
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  wishlist   Wishlist  @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([wishlistId, productId])
+  @@map("wishlist_items")
+}
+
+model Notification {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  type      NotificationType
+  title     String    @db.VarChar(255)
+  message   String    @db.Text
+  data      Json?
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  link      String?   @db.VarChar(255)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt])
+  @@map("notifications")
+}
+
+model Promotion {
+  id                Int       @id @default(autoincrement())
+  code              String    @unique @db.VarChar(255)
+  name              String    @db.VarChar(255)
+  description       String?   @db.Text
+  type              PromotionType
+  value             Decimal   @db.Decimal(10, 2)
+  minPurchaseAmount Decimal?  @db.Decimal(10, 2)
+  maxDiscountAmount Decimal?  @db.Decimal(10, 2)
+  applicableTo      ApplicableTo @default(all)
+  categoryIds       Json?
+  productIds        Json?
+  usageLimit        Int?
+  usageCount        Int       @default(0)
+  userUsageLimit    Int       @default(1)
+  startDate         DateTime
+  endDate           DateTime
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("promotions")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique @db.VarChar(500)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+// Enums
+enum Role {
+  customer
+  admin
+  vendor
+}
+
+enum AddressType {
+  home
+  work
+  other
+}
+
+enum CategoryType {
+  book
+  printed_item
+}
+
+enum ProductType {
+  book
+  printed_item
+}
+
+enum Availability {
+  in_stock
+  out_of_stock
+  pre_order
+  limited_stock
+}
+
+enum ProductStatus {
+  active
+  inactive
+  draft
+}
+
+enum PaymentMethod {
+  card
+  paypal
+  google_pay
+  apple_pay
+  upi
+  cod
+  bank_transfer
+}
+
+enum PaymentStatus {
+  pending
+  processing
+  completed
+  failed
+  refunded
+}
+
+enum OrderStatus {
+  pending
+  processing
+  confirmed
+  shipped
+  out_for_delivery
+  delivered
+  cancelled
+  returned
+}
+
+enum NotificationType {
+  order
+  payment
+  shipping
+  promotion
+  price_drop
+  system
+}
+
+enum PromotionType {
+  percentage
+  fixed_amount
+  free_shipping
+}
+
+enum ApplicableTo {
+  all
+  categories
+  products
+}
+
+model Customization {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  productType     String    @db.VarChar(255)
+  productLine     String?   @db.VarChar(50)   // "printing" | "packaging"
+  requirements    String    @db.Text
+  configOptions   Json?     // { size, gsm, colour, side, quantity, paperType, lamination, l, h, w, ... }
+  quantity        Int?      // no. of boxes/sheets
+  fileUrl         String?   @db.VarChar(500)
+  fileName        String?   @db.VarChar(255)
+  status          CustomizationStatus @default(pending)
+  amount          Decimal   @default(0) @db.Decimal(10, 2)  // calculated total price
+  paperPrice      Decimal?  @db.Decimal(10, 2)
+  printingCharge  Decimal?  @db.Decimal(10, 2)
+  dieCutting      Decimal?  @db.Decimal(10, 2)
+  notes           String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("customizations")
+}
+
+enum CustomizationStatus {
+  pending
+  processing
+  completed
+  cancelled
+}
+
+model ChatRoom {
+  id            Int           @id @default(autoincrement())
+  userId        Int           @unique
+  lastMessage   String?       @db.Text
+  lastMessageAt DateTime      @default(now())
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages      ChatMessage[]
+
+  @@map("chat_rooms")
+}
+
+model ChatMessage {
+  id          Int       @id @default(autoincrement())
+  roomId      Int
+  senderId    Int
+  message     String    @db.Text
+  isRead      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  room        ChatRoom  @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@map("chat_messages")
+}

@@ -1,0 +1,82 @@
+import 'package:flutter/material.dart';
+
+import '../../../components/product_card.dart';
+import '../../../models/product.dart';
+import '../../../services/home_service.dart';
+import '../../details/details_screen.dart';
+import '../../products/products_screen.dart';
+import 'section_title.dart';
+
+class PopularProducts extends StatefulWidget {
+  const PopularProducts({super.key});
+
+  @override
+  State<PopularProducts> createState() => _PopularProductsState();
+}
+
+class _PopularProductsState extends State<PopularProducts> {
+  final HomeService _service = HomeService();
+  late Future<List<Product>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _service.fetchPopularProducts();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: SectionTitle(
+            title: "Popular Products",
+            press: () {
+              Navigator.pushNamed(context, ProductsScreen.routeName);
+            },
+          ),
+        ),
+        FutureBuilder<List<Product>>(
+          future: _future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Padding(
+                padding: EdgeInsets.all(20),
+                child: LinearProgressIndicator(),
+              );
+            }
+            if (snapshot.hasError) {
+              return const SizedBox.shrink(); // Hide on error
+            }
+            final products = snapshot.data ?? [];
+            if (products.isEmpty) {
+              return const SizedBox.shrink();
+            }
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ...products.map(
+                    (product) => Padding(
+                      padding: const EdgeInsets.only(left: 20),
+                      child: ProductCard(
+                        product: product,
+                        onPress: () => Navigator.pushNamed(
+                          context,
+                          DetailsScreen.routeName,
+                          arguments: ProductDetailsArguments(product: product),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
