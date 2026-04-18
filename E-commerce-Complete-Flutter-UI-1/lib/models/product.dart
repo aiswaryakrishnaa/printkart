@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import '../config/app_config.dart';
+
 class Product {
   Product({
     required this.id,
@@ -16,6 +18,7 @@ class Product {
     this.category,
     this.brand,
     this.shortDescription,
+    this.type,
   });
 
   final String id;
@@ -32,6 +35,7 @@ class Product {
   final String? inventoryStatus;
   final String? category;
   final String? brand;
+  final String? type;
 
   factory Product.fromJson(Map<String, dynamic> json) {
     final images = <String>[];
@@ -39,11 +43,11 @@ class Product {
     if (media is List) {
       for (final item in media) {
         if (item is String && item.isNotEmpty) {
-          images.add(item);
+          images.add(_normalizeImageUrl(item));
         } else if (item is Map<String, dynamic>) {
           final url = item['url'] as String?;
           if (url != null && url.isNotEmpty) {
-            images.add(url);
+            images.add(_normalizeImageUrl(url));
           }
         }
       }
@@ -66,8 +70,8 @@ class Product {
           'Untitled product',
       description: json['description'] as String? ?? '',
       images: images.isEmpty ? ['https://placehold.co/600x400'] : images,
-      price: (json['price'] is num ? (json['price'] as num) : 0).toDouble(),
-      rating: (json['rating'] is num ? (json['rating'] as num) : 0).toDouble(),
+      price: _parseDouble(json['price']),
+      rating: _parseDouble(json['rating'] ?? json['ratingAverage']),
       isFavourite:
           json['isFavourite'] as bool? ?? json['isFavorite'] as bool? ?? false,
       isPopular: json['isPopular'] as bool? ??
@@ -87,6 +91,7 @@ class Product {
           json['category']?['name'] as String? ?? json['category'] as String?,
       brand: json['brand'] as String?,
       shortDescription: json['shortDescription'] as String?,
+      type: json['type'] as String?,
     );
   }
 
@@ -98,5 +103,20 @@ class Product {
     final intColor = int.tryParse(hex, radix: 16);
     if (intColor == null) return const Color(0xFFF6625E);
     return Color(intColor);
+  }
+
+  static double _parseDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  static String _normalizeImageUrl(String imagePath) {
+    if (imagePath.startsWith('http')) return imagePath;
+    var baseUrl = AppConfig.baseUrl;
+    if (baseUrl.endsWith('/api')) baseUrl = baseUrl.substring(0, baseUrl.length - 4);
+    if (baseUrl.endsWith('/api/')) baseUrl = baseUrl.substring(0, baseUrl.length - 5);
+    if (!baseUrl.endsWith('/')) baseUrl = '$baseUrl/';
+    return '${baseUrl}uploads/$imagePath';
   }
 }

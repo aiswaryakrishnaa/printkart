@@ -17,6 +17,7 @@ import 'screens/sign_in/sign_in_screen.dart';
 import 'screens/sign_up/sign_up_screen.dart';
 import 'screens/splash/splash_screen.dart';
 import 'screens/customization/customization_screen.dart';
+import 'screens/customization/my_customization_requests_screen.dart';
 import 'screens/orders/orders_screen.dart';
 import 'screens/select_product/product_type_screen.dart';
 import 'screens/select_product/configure_product_screen.dart';
@@ -45,6 +46,8 @@ final Map<String, WidgetBuilder> routes = {
   AddressesScreen.routeName: (context) => const AddressesScreen(),
   NotificationsScreen.routeName: (context) => const NotificationsScreen(),
   CustomizationScreen.routeName: (context) => const CustomizationScreen(),
+  MyCustomizationRequestsScreen.routeName: (context) =>
+      const MyCustomizationRequestsScreen(),
   OrdersScreen.routeName: (context) => const OrdersScreen(),
   ProductTypeScreen.routeName: (context) => const ProductTypeScreen(),
   ConfigureProductScreen.routeName: (context) => const ConfigureProductScreen(),

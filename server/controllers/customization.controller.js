@@ -25,7 +25,8 @@ exports.createCustomization = async (req, res, next) => {
             amount,
             paperPrice,
             printingCharge,
-            dieCutting
+            dieCutting,
+            dummyPaymentSucceeded
         } = req.body;
         const userId = req.user.id;
 
@@ -33,9 +34,15 @@ exports.createCustomization = async (req, res, next) => {
         let fileName = null;
 
         if (req.file) {
-            fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            fileUrl = req.file.path && req.file.path.startsWith('http')
+                ? req.file.path
+                : `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
             fileName = req.file.originalname;
         }
+
+        const payOk =
+            String(dummyPaymentSucceeded || '').toLowerCase() === 'true' ||
+            String(dummyPaymentSucceeded || '') === '1';
 
         const data = {
             userId,
@@ -43,7 +50,9 @@ exports.createCustomization = async (req, res, next) => {
             requirements: requirements || '',
             fileUrl,
             fileName,
-            status: 'pending'
+            status: 'pending',
+            paymentStatus: payOk ? 'paid' : 'pending',
+            paymentReference: payOk ? `DUMMY-${Date.now()}` : null
         };
 
         if (productLine != null) data.productLine = productLine;

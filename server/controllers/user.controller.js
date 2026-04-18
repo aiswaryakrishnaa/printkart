@@ -323,7 +323,9 @@ exports.uploadAvatar = async (req, res, next) => {
       });
     }
 
-    const avatarUrl = `/uploads/${req.file.filename}`;
+    const avatarUrl = req.file.path && req.file.path.startsWith('http')
+      ? req.file.path
+      : `/uploads/${req.file.filename}`;
 
     // Update user's profile picture
     await prisma.user.update({

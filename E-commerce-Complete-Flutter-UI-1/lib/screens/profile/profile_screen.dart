@@ -7,6 +7,7 @@ import '../../services/user_service.dart';
 import 'addresses_screen.dart';
 import '../orders/orders_screen.dart';
 import '../customization/customization_screen.dart';
+import '../customization/my_customization_requests_screen.dart';
 import '../server_config/server_config_screen.dart';
 import 'components/profile_menu.dart';
 import 'components/profile_pic.dart';
@@ -120,6 +121,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               icon: "assets/icons/Parcel.svg", 
               press: () {
                 Navigator.of(context).pushNamed(CustomizationScreen.routeName);
+              },
+            ),
+            ProfileMenu(
+              text: "Print & packaging orders",
+              icon: "assets/icons/Bill Icon.svg",
+              press: () {
+                Navigator.of(context).pushNamed(
+                  MyCustomizationRequestsScreen.routeName,
+                );
               },
             ),
             ProfileMenu(

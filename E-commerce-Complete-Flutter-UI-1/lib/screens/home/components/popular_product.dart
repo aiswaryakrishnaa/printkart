@@ -33,7 +33,17 @@ class _PopularProductsState extends State<PopularProducts> {
           child: SectionTitle(
             title: "Popular Products",
             press: () {
-              Navigator.pushNamed(context, ProductsScreen.routeName);
+              Navigator.pushNamed(
+                context,
+                ProductsScreen.routeName,
+                arguments: ProductsScreenArguments(
+                  appBarTitle: 'Popular Products',
+                  status: 'active',
+                  sortBy: 'soldCount',
+                  sortOrder: 'desc',
+                  limit: 50,
+                ),
+              );
             },
           ),
         ),
@@ -47,11 +57,23 @@ class _PopularProductsState extends State<PopularProducts> {
               );
             }
             if (snapshot.hasError) {
-              return const SizedBox.shrink(); // Hide on error
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Text(
+                  'Could not load popular products.',
+                  style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                ),
+              );
             }
             final products = snapshot.data ?? [];
             if (products.isEmpty) {
-              return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Text(
+                  'No products to show yet.',
+                  style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                ),
+              );
             }
             return SingleChildScrollView(
               scrollDirection: Axis.horizontal,

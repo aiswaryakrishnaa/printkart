@@ -119,6 +119,7 @@ function AppRoutes() {
         <Route path="users" element={<Users />} />
         <Route path="categories" element={<Categories />} />
         <Route path="customizations" element={<Customizations />} />
+        <Route path="fulfilment/:productType" element={<Customizations />} />
       </Route>
     </Routes>
   );

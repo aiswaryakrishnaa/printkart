@@ -64,7 +64,12 @@ class _BookStoreSectionState extends State<BookStoreSection> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()));
             }
-            final categories = snapshot.data ?? [];
+            final categories = (snapshot.data ?? [])
+                .where((category) {
+                  final name = category.name.trim().toLowerCase();
+                  return name != 'printing' && name != 'packaging';
+                })
+                .toList();
             if (categories.isEmpty) return const SizedBox.shrink();
 
             return Column(

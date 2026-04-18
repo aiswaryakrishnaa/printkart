@@ -22,21 +22,22 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import PeopleIcon from '@mui/icons-material/People';
 import CategoryIcon from '@mui/icons-material/Category';
 import DesignServicesIcon from '@mui/icons-material/DesignServices';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import ChatIcon from '@mui/icons-material/Chat';
 import LogoutIcon from '@mui/icons-material/Logout';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useAuth } from '../context/AuthContext';
-import FloatingChat from './FloatingChat';
+import {
+  CUSTOMIZATION_GENERIC_PATH,
+  FULFILMENT_PRODUCT_TYPES,
+  fulfilmentProductPath,
+  titleForPath,
+} from '../constants/fulfilmentNav';
 
 const drawerWidth = 280;
 
-const menuItems = [
+const coreMenuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
   { text: 'Products', icon: <InventoryIcon />, path: '/products' },
   { text: 'Orders', icon: <ShoppingCartIcon />, path: '/orders' },
-  { text: 'Customizations', icon: <DesignServicesIcon />, path: '/customizations' },
-  { text: 'Notifications', icon: <NotificationsIcon />, path: '/notifications' },
-  { text: 'Chat', icon: <ChatIcon />, path: '/chat' },
   { text: 'Users', icon: <PeopleIcon />, path: '/users' },
   { text: 'Categories', icon: <CategoryIcon />, path: '/categories' },
 ];
@@ -48,9 +49,7 @@ export default function Layout() {
   const { logout } = useAuth();
   const mainContentRef = useRef(null);
 
-  // GSAP Page Transition
   useEffect(() => {
-    // Skip transition for dashboard
     if (location.pathname === '/' || !mainContentRef.current) return;
 
     const ctx = gsap.context(() => {
@@ -59,7 +58,7 @@ export default function Layout() {
         {
           opacity: 0,
           y: 20,
-          scale: 0.98
+          scale: 0.98,
         },
         {
           opacity: 1,
@@ -67,7 +66,7 @@ export default function Layout() {
           scale: 1,
           duration: 0.5,
           ease: 'power3.out',
-          clearProps: 'all' // Ensure cleanup after animation
+          clearProps: 'all',
         }
       );
     }, mainContentRef);
@@ -84,6 +83,10 @@ export default function Layout() {
     navigate('/login');
   };
 
+  const isPathActive = (path) => location.pathname === path;
+  const isFulfilmentActive = (productId) =>
+    location.pathname === fulfilmentProductPath(productId);
+
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#ffffff' }}>
       <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -96,10 +99,12 @@ export default function Layout() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
           }}
         >
-          <Typography variant="h6" sx={{ color: 'white', fontWeight: 'bold' }}>A</Typography>
+          <Typography variant="h6" sx={{ color: 'white', fontWeight: 'bold' }}>
+            A
+          </Typography>
         </Box>
         <Typography
           variant="h6"
@@ -108,16 +113,16 @@ export default function Layout() {
             fontFamily: 'Outfit',
             background: 'linear-gradient(135deg, #1e293b 0%, #64748b 100%)',
             WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
+            WebkitTextFillColor: 'transparent',
           }}
         >
           Admin
         </Typography>
       </Box>
       <Divider sx={{ opacity: 0.5 }} />
-      <List sx={{ px: 2, py: 2, flexGrow: 1 }}>
-        {menuItems.map((item) => {
-          const active = location.pathname === item.path;
+      <List sx={{ px: 2, py: 2, flexGrow: 1, overflow: 'auto' }}>
+        {coreMenuItems.map((item) => {
+          const active = isPathActive(item.path);
           return (
             <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
               <ListItemButton
@@ -135,12 +140,12 @@ export default function Layout() {
                     },
                     '&:hover': {
                       bgcolor: 'rgba(99, 102, 241, 0.12)',
-                    }
+                    },
                   },
                   '&:hover': {
                     bgcolor: 'rgba(241, 245, 249, 1)',
                     transform: 'translateX(4px)',
-                  }
+                  },
                 }}
               >
                 <ListItemIcon sx={{ minWidth: 45, transition: 'color 0.2s' }}>
@@ -150,7 +155,94 @@ export default function Layout() {
                   primary={item.text}
                   primaryTypographyProps={{
                     fontWeight: active ? 600 : 500,
-                    fontSize: '0.95rem'
+                    fontSize: '0.95rem',
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
+
+        <Divider sx={{ my: 2, opacity: 0.6 }} />
+
+        <ListItem disablePadding sx={{ mb: 1 }}>
+          <ListItemButton
+            selected={isPathActive(CUSTOMIZATION_GENERIC_PATH)}
+            onClick={() => navigate(CUSTOMIZATION_GENERIC_PATH)}
+            sx={{
+              borderRadius: '12px',
+              py: 1.5,
+              transition: 'all 0.2s',
+              '&.Mui-selected': {
+                bgcolor: 'rgba(99, 102, 241, 0.08)',
+                color: '#6366f1',
+                '& .MuiListItemIcon-root': { color: '#6366f1' },
+                '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.12)' },
+              },
+              '&:hover': {
+                bgcolor: 'rgba(241, 245, 249, 1)',
+                transform: 'translateX(4px)',
+              },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 45 }}>
+              <DesignServicesIcon fontSize="medium" />
+            </ListItemIcon>
+            <ListItemText
+              primary="Customization"
+              primaryTypographyProps={{ fontWeight: 500, fontSize: '0.95rem' }}
+            />
+          </ListItemButton>
+        </ListItem>
+
+        <Typography
+          variant="caption"
+          sx={{
+            px: 1.5,
+            py: 1,
+            display: 'block',
+            color: 'text.secondary',
+            fontWeight: 700,
+            letterSpacing: 0.6,
+            textTransform: 'uppercase',
+          }}
+        >
+          Printing &amp; packaging
+        </Typography>
+
+        {FULFILMENT_PRODUCT_TYPES.map(({ id, label }) => {
+          const path = fulfilmentProductPath(id);
+          const active = isFulfilmentActive(id);
+          return (
+            <ListItem key={id} disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                selected={active}
+                onClick={() => navigate(path)}
+                sx={{
+                  borderRadius: '10px',
+                  py: 1,
+                  pl: 2,
+                  transition: 'all 0.2s',
+                  '&.Mui-selected': {
+                    bgcolor: 'rgba(99, 102, 241, 0.08)',
+                    color: '#6366f1',
+                    '& .MuiListItemIcon-root': { color: '#6366f1' },
+                    '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.12)' },
+                  },
+                  '&:hover': {
+                    bgcolor: 'rgba(241, 245, 249, 1)',
+                    transform: 'translateX(4px)',
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 36 }}>
+                  <ChevronRightIcon sx={{ fontSize: 20, opacity: 0.75 }} />
+                </ListItemIcon>
+                <ListItemText
+                  primary={label}
+                  primaryTypographyProps={{
+                    fontWeight: active ? 600 : 500,
+                    fontSize: '0.875rem',
                   }}
                 />
               </ListItemButton>
@@ -170,7 +262,7 @@ export default function Layout() {
               '&:hover': {
                 bgcolor: 'rgba(239, 68, 68, 0.08)',
                 transform: 'translateX(4px)',
-              }
+              },
             }}
           >
             <ListItemIcon sx={{ minWidth: 45, color: '#ef4444' }}>
@@ -194,7 +286,7 @@ export default function Layout() {
           bgcolor: 'rgba(248, 250, 252, 0.8)',
           backdropFilter: 'blur(12px)',
           borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
-          color: '#1e293b'
+          color: '#1e293b',
         }}
       >
         <Toolbar sx={{ justifyContent: 'space-between', px: { stroke: 3 } }}>
@@ -209,13 +301,17 @@ export default function Layout() {
               <MenuIcon />
             </IconButton>
             <Typography variant="h6" sx={{ fontWeight: 600, fontFamily: 'Outfit' }}>
-              {menuItems.find(item => item.path === location.pathname)?.text || 'Admin'}
+              {titleForPath(location.pathname)}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box sx={{ textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>Administrator</Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>admin@example.com</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                Administrator
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                admin@example.com
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -228,7 +324,7 @@ export default function Layout() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 'bold',
-                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.2)'
+                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.2)',
               }}
             >
               A
@@ -236,10 +332,7 @@ export default function Layout() {
           </Box>
         </Toolbar>
       </AppBar>
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-      >
+      <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -253,7 +346,7 @@ export default function Layout() {
               boxSizing: 'border-box',
               width: drawerWidth,
               border: 'none',
-              boxShadow: '4px 0 24px rgba(0,0,0,0.1)'
+              boxShadow: '4px 0 24px rgba(0,0,0,0.1)',
             },
           }}
         >
@@ -288,8 +381,6 @@ export default function Layout() {
           <Outlet />
         </Box>
       </Box>
-      <FloatingChat />
     </Box>
   );
 }
-

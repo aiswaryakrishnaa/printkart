@@ -1,11 +1,9 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Conditionally import Platform helper - only available on mobile/desktop
-import 'app_config_mobile.dart' if (dart.library.html) 'app_config_web.dart'
-    show platformCheckImpl;
-
 const String _kApiBaseUrlKey = 'api_base_url';
+const String _kHostedApiBaseUrl = 'https://my-node-project-three.vercel.app/api';
+const String _kLocalDebugApiBaseUrl = 'http://10.0.2.2:5000/api';
 
 class AppConfig {
   AppConfig._();
@@ -39,9 +37,6 @@ class AppConfig {
   /// Current override if any (for display in UI).
   static String? get overrideBaseUrl => _overrideBaseUrl;
 
-  static const String _localNetworkIp =
-      '192.168.1.14'; // Fallback; use "Set API URL" in app to set your PC IP
-
   static String get baseUrl {
     if (_overrideBaseUrl != null && _overrideBaseUrl!.isNotEmpty) {
       return _overrideBaseUrl!.endsWith('/api')
@@ -52,20 +47,9 @@ class AppConfig {
     const envUrl = String.fromEnvironment('API_BASE_URL');
     if (envUrl.isNotEmpty) return envUrl;
 
-    if (kIsWeb) {
-      return 'http://127.0.0.1:5000/api';
-    }
-
-    try {
-      final isAndroid = platformCheckImpl();
-      if (isAndroid) {
-        if (_localNetworkIp.isNotEmpty) {
-          return 'http://$_localNetworkIp:5000/api';
-        }
-        return 'http://10.0.2.2:5000/api';
-      }
-    } catch (_) {}
-
-    return 'http://127.0.0.1:5000/api';
+    // In debug mobile runs, prefer local backend (Android emulator loopback).
+    // Users on real devices can override this from Server Config screen.
+    if (!kIsWeb && kDebugMode) return _kLocalDebugApiBaseUrl;
+    return _kHostedApiBaseUrl;
   }
 }

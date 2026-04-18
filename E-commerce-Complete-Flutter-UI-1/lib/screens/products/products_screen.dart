@@ -27,22 +27,31 @@ class _ProductsScreenState extends State<ProductsScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args =
-        ModalRoute.of(context)?.settings.arguments as ProductsScreenArguments?;
+    final raw = ModalRoute.of(context)?.settings.arguments;
+    final args = raw is ProductsScreenArguments ? raw : null;
     if (args != _args) {
-      _args = args;
-      _future = _service.fetchProducts(
-        search: args?.search,
-        category: args?.category,
-      );
+      setState(() {
+        _args = args;
+        _future = _service.fetchProducts(
+          search: args?.search,
+          category: args?.category,
+          type: args?.type,
+          popularOnly: args?.popularOnly ?? false,
+          sortBy: args?.sortBy,
+          sortOrder: args?.sortOrder,
+          status: args?.status,
+          limit: args?.limit ?? 20,
+        );
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final title = _args?.appBarTitle ?? 'Products';
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Products"),
+        title: Text(title),
       ),
       body: SafeArea(
         child: Padding(
@@ -57,7 +66,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 return Center(
                     child: Text('Failed to load products: ${snapshot.error}'));
               }
-              final products = snapshot.data ?? [];
+              var products = snapshot.data ?? [];
+              if (_args?.type != null) {
+                products = products
+                    .where((product) => product.type == _args!.type)
+                    .toList();
+              }
               if (products.isEmpty) {
                 return const Center(child: Text('No products found'));
               }
@@ -88,8 +102,26 @@ class _ProductsScreenState extends State<ProductsScreen> {
 }
 
 class ProductsScreenArguments {
-  ProductsScreenArguments({this.search, this.category});
+  ProductsScreenArguments({
+    this.search,
+    this.category,
+    this.type,
+    this.popularOnly = false,
+    this.sortBy,
+    this.sortOrder,
+    this.status,
+    this.limit,
+    this.appBarTitle,
+  });
 
   final String? search;
   final String? category;
+  final String? type;
+  /// Matches backend `isPopular=true` (featured products).
+  final bool popularOnly;
+  final String? sortBy;
+  final String? sortOrder;
+  final String? status;
+  final int? limit;
+  final String? appBarTitle;
 }

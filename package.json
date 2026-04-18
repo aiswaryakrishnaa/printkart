@@ -4,6 +4,7 @@
   "description": "E-commerce backend for Books & Printed Items with Admin Panel",
   "main": "server/index.js",
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "nodemon server/index.js",
     "start": "node server/index.js",
     "admin:dev": "cd admin && npm run dev",

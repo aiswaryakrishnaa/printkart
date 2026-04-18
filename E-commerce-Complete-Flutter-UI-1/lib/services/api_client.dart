@@ -200,6 +200,32 @@ class ApiClient {
     return jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
   }
 
+  /// Server logout after local session is cleared. Uses snapped tokens; short timeout so UI never waits on the network.
+  Future<void> logoutWithToken({
+    required String accessToken,
+    String? refreshToken,
+  }) async {
+    final uri = Uri.parse('${AppConfig.baseUrl}/auth/logout');
+    final body = (refreshToken != null && refreshToken.isNotEmpty)
+        ? jsonEncode({'refreshToken': refreshToken})
+        : '{}';
+    try {
+      await _httpClient
+          .post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $accessToken',
+            },
+            body: body,
+          )
+          .timeout(const Duration(seconds: 4));
+    } catch (_) {
+      // best-effort only
+    }
+  }
+
   Future<bool> _refreshToken() async {
     final refreshToken = _authStorage.refreshToken;
     if (refreshToken == null) return false;

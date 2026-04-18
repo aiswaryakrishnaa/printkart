@@ -775,13 +775,65 @@ exports.getCustomizations = async (req, res, next) => {
 
 exports.updateCustomizationStatus = async (req, res, next) => {
   try {
-    const { status, note } = req.body;
+    const id = parseInt(req.params.id, 10);
+    const {
+      status,
+      note,
+      amount,
+      paperPrice,
+      printingCharge,
+      dieCutting,
+      assignedShop
+    } = req.body;
+
+    const data = {};
+    if (typeof status === 'string' && status.trim()) {
+      data.status = status.trim();
+    }
+    if (assignedShop !== undefined) {
+      data.assignedShop =
+        assignedShop === null || String(assignedShop).trim() === ''
+          ? null
+          : String(assignedShop).trim();
+    }
+    if (note !== undefined) {
+      data.notes = note === null || note === '' ? null : String(note);
+    }
+    if (amount !== undefined) {
+      if (amount === null || amount === '') {
+        data.amount = 0;
+      } else {
+        const n = parseFloat(amount);
+        if (Number.isFinite(n)) data.amount = n;
+      }
+    }
+    const setOptionalDecimal = (key, val) => {
+      if (val === undefined) return;
+      if (val === null || val === '') {
+        data[key] = null;
+        return;
+      }
+      const n = parseFloat(val);
+      if (Number.isFinite(n)) data[key] = n;
+    };
+    setOptionalDecimal('paperPrice', paperPrice);
+    setOptionalDecimal('printingCharge', printingCharge);
+    setOptionalDecimal('dieCutting', dieCutting);
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION',
+          message:
+            'Provide at least one of: status, assignedShop, note, amount, paperPrice, printingCharge, dieCutting'
+        }
+      });
+    }
+
     const customization = await prisma.customization.update({
-      where: { id: parseInt(req.params.id) },
-      data: {
-        status,
-        notes: note
-      },
+      where: { id },
+      data,
       include: {
         user: {
           select: {

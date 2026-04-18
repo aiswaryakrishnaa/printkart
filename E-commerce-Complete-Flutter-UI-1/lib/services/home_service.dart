@@ -43,9 +43,7 @@ class HomeService {
   }
 
   Future<List<Product>> fetchPopularProducts() async {
-    try {
-      final response = await _apiClient
-          .get('/products', queryParameters: {'sortBy': 'soldCount', 'sortOrder': 'desc', 'limit': '10'}, requiresAuth: false);
+    List<Product> parse(Map<String, dynamic> response) {
       final data = response['data'];
       final list =
           data is List ? data : data?['products'] as List<dynamic>? ?? [];
@@ -53,6 +51,36 @@ class HomeService {
           .whereType<Map<String, dynamic>>()
           .map(Product.fromJson)
           .toList();
+    }
+
+    try {
+      // Prefer featured rows from the products table (backend maps isPopular -> featured).
+      final featured = await _apiClient.get(
+        '/products',
+        queryParameters: {
+          'status': 'active',
+          'isPopular': 'true',
+          'sortBy': 'soldCount',
+          'sortOrder': 'desc',
+          'limit': '10',
+        },
+        requiresAuth: false,
+      );
+      final featuredList = parse(featured);
+      if (featuredList.isNotEmpty) return featuredList;
+
+      // Fallback: active products ordered by soldCount (still real DB data).
+      final fallback = await _apiClient.get(
+        '/products',
+        queryParameters: {
+          'status': 'active',
+          'sortBy': 'soldCount',
+          'sortOrder': 'desc',
+          'limit': '10',
+        },
+        requiresAuth: false,
+      );
+      return parse(fallback);
     } catch (e) {
       return []; // Return empty list on error
     }

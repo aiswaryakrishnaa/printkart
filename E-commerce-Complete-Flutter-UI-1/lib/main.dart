@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Books & Prints Shop',
+        title: 'Printkart',
         theme: AppTheme.lightTheme(context),
         initialRoute: InitialRouteScreen.routeName,
         routes: routes,

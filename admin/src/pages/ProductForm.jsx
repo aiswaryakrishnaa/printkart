@@ -18,6 +18,7 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import ImageIcon from '@mui/icons-material/Image';
 import api from '../services/api';
+import { uploadsUrl } from '../services/url';
 
 export default function ProductForm() {
   const { id } = useParams();
@@ -79,10 +80,9 @@ export default function ProductForm() {
         });
         
         // Set image previews for existing images
-        const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const existingImages = product.images ? (Array.isArray(product.images) ? product.images : [product.images]) : [];
         setImagePreviews(existingImages.map(img => ({
-          url: img.startsWith('http') ? img : `${baseURL}/uploads/${img}`,
+          url: uploadsUrl(img),
           filename: img,
           isExisting: true
         })));
@@ -184,12 +184,7 @@ export default function ProductForm() {
     if (typeof image === 'string' && (image.startsWith('http://') || image.startsWith('https://'))) {
       return image;
     }
-    // Use relative URL (will be proxied by Vite in dev, or use full URL in production)
-    const baseURL = import.meta.env.VITE_API_URL || '';
-    if (baseURL) {
-      return `${baseURL}/uploads/${image}`;
-    }
-    return `/uploads/${image}`;
+    return uploadsUrl(image);
   };
 
   if (loadingCategories) {

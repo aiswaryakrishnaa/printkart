@@ -12,6 +12,13 @@ const { connectDB } = require('./config/database');
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
+
+const parseOrigins = (value) =>
+  (value || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
 
 // Middleware - CORS: allow admin panel, Flutter web, and dev origins
 const corsOptions = {
@@ -21,7 +28,9 @@ const corsOptions = {
       'http://localhost:3001',
       'http://localhost:3002',
       'http://localhost:3003',
-      'http://localhost:5173'
+      'http://localhost:5173',
+      ...parseOrigins(process.env.ADMIN_ORIGIN),
+      ...parseOrigins(process.env.CORS_ORIGINS)
     ];
     // Allow localhost (any port), 127.0.0.1 (any port), and listed origins
     const allowedRegex = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
@@ -109,10 +118,12 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+}
 
 module.exports = app;
 

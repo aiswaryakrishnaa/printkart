@@ -36,6 +36,7 @@ import {
 import api from '../services/api';
 import { pageAnimations } from '../utils/animations';
 import { useEffect as useAnimationEffect } from 'react';
+import { uploadsUrl } from '../services/url';
 
 const StatCard = ({ title, value, icon, color, trend }) => (
   <Paper
@@ -300,7 +301,7 @@ export default function Dashboard() {
                       <ListItem key={product.id} sx={{ px: 0, py: 1.5 }}>
                         <ListItemAvatar>
                           <Avatar
-                            src={product.image ? `http://localhost:5000/uploads/${product.image}` : null}
+                            src={uploadsUrl(product.image)}
                             variant="rounded"
                             sx={{ width: 48, height: 48, bgcolor: 'rgba(0,0,0,0.05)' }}
                           >

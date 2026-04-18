@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = "mysql://root:123456789@localhost:3306/ecommerce"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -458,25 +458,28 @@ enum ApplicableTo {
 }
 
 model Customization {
-  id              Int       @id @default(autoincrement())
-  userId          Int
-  productType     String    @db.VarChar(255)
-  productLine     String?   @db.VarChar(50)   // "printing" | "packaging"
-  requirements    String    @db.Text
-  configOptions   Json?     // { size, gsm, colour, side, quantity, paperType, lamination, l, h, w, ... }
-  quantity        Int?      // no. of boxes/sheets
-  fileUrl         String?   @db.VarChar(500)
-  fileName        String?   @db.VarChar(255)
-  status          CustomizationStatus @default(pending)
-  amount          Decimal   @default(0) @db.Decimal(10, 2)  // calculated total price
-  paperPrice      Decimal?  @db.Decimal(10, 2)
-  printingCharge  Decimal?  @db.Decimal(10, 2)
-  dieCutting      Decimal?  @db.Decimal(10, 2)
-  notes           String?   @db.Text
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                Int       @id @default(autoincrement())
+  userId            Int
+  productType       String    @db.VarChar(255)
+  productLine       String?   @db.VarChar(50)   // "printing" | "packaging"
+  requirements      String    @db.Text
+  configOptions     Json?     // { size, gsm, colour, side, quantity, paperType, lamination, l, h, w, ... }
+  quantity          Int?      // no. of boxes/sheets
+  fileUrl           String?   @db.VarChar(500)
+  fileName          String?   @db.VarChar(255)
+  status            CustomizationStatus @default(pending)
+  amount            Decimal   @default(0) @db.Decimal(10, 2)  // calculated total price
+  paperPrice        Decimal?  @db.Decimal(10, 2)
+  printingCharge    Decimal?  @db.Decimal(10, 2)
+  dieCutting        Decimal?  @db.Decimal(10, 2)
+  notes             String?   @db.Text
+  paymentStatus     String    @default("pending") @db.VarChar(32) // pending | paid | failed (dummy gateway)
+  paymentReference  String?   @db.VarChar(255)
+  assignedShop      String?   @db.VarChar(255)   // partner print shop name (admin)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("customizations")
 }

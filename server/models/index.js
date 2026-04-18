@@ -225,7 +225,7 @@ function addUserMethods(user) {
   };
 
   user.toJSON = function () {
-    const { password, refreshTokens, ...rest } = this;
+    const { password, refreshTokens, _originalPassword, ...rest } = this;
     return rest;
   };
 

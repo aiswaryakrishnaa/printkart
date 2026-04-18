@@ -33,7 +33,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     {'value': 'google_pay', 'label': 'Google Pay', 'icon': 'G'},
     {'value': 'apple_pay', 'label': 'Apple Pay', 'icon': '🍎'},
     {'value': 'upi', 'label': 'UPI', 'icon': '📱'},
-    {'value': 'cod', 'label': 'Cash on Delivery', 'icon': '💵'},
+    {'value': 'cod', 'label': 'Dummy Payment (Test)', 'icon': '🧪'},
   ];
 
   @override
@@ -300,11 +300,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       decoration: const InputDecoration(
         border: OutlineInputBorder(),
         labelText: 'Select Address',
+        isDense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
-      // itemHeight: null allows items to have variable height, ensuring the Column fits
-      // We use isDense: true to reduce internal padding if needed, but itemHeight: null is key.
-      itemHeight: null, 
+      // Closed field height is tight; multi-line `child` overflows. Show one line when closed.
+      selectedItemBuilder: (BuildContext context) {
+        return addresses.map((address) {
+          return Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              '${address.fullName}, ${address.city}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          );
+        }).toList();
+      },
+      itemHeight: null,
       items: addresses.map((address) {
         return DropdownMenuItem<UserAddress>(
           value: address,

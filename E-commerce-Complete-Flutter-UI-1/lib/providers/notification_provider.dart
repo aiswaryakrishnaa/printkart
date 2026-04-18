@@ -45,6 +45,42 @@ class NotificationProvider extends ChangeNotifier {
   int get unreadCount => _unreadCount;
   bool get isLoading => _loading;
 
+  /// Local-only rows for demo when the API has nothing or is unreachable.
+  static bool _isDummyId(int id) => id <= -100000;
+
+  static List<NotificationModel> _dummyNotifications() {
+    final now = DateTime.now();
+    return [
+      NotificationModel(
+        id: -100001,
+        title: 'Order update',
+        message: 'Your order #1042 is packed and will ship tomorrow.',
+        type: 'order',
+        isRead: false,
+        createdAt: now.subtract(const Duration(hours: 2)),
+      ),
+      NotificationModel(
+        id: -100002,
+        title: 'Weekend offer',
+        message: 'Get 15% off novels this weekend. Tap to browse popular picks.',
+        type: 'promotion',
+        isRead: false,
+        createdAt: now.subtract(const Duration(hours: 5)),
+      ),
+      NotificationModel(
+        id: -100003,
+        title: 'Payment confirmed',
+        message: 'We received your payment. Thank you for shopping with us.',
+        type: 'payment',
+        isRead: true,
+        createdAt: now.subtract(const Duration(days: 1)),
+      ),
+    ];
+  }
+
+  static int _countUnread(List<NotificationModel> list) =>
+      list.where((n) => !n.isRead).length;
+
   Future<void> fetchNotifications() async {
     _setLoading(true);
     try {
@@ -53,10 +89,20 @@ class NotificationProvider extends ChangeNotifier {
       if (data != null && data['notifications'] != null) {
         final List<dynamic> list = data['notifications'];
         _notifications = list.map((item) => NotificationModel.fromJson(item)).toList();
-        _unreadCount = data['unreadCount'] ?? 0;
+        _unreadCount = (data['unreadCount'] as num?)?.toInt() ??
+            _countUnread(_notifications);
+        if (_notifications.isEmpty) {
+          _notifications = _dummyNotifications();
+          _unreadCount = _countUnread(_notifications);
+        }
+      } else {
+        _notifications = _dummyNotifications();
+        _unreadCount = _countUnread(_notifications);
       }
     } catch (e) {
       debugPrint('Error fetching notifications: $e');
+      _notifications = _dummyNotifications();
+      _unreadCount = _countUnread(_notifications);
     } finally {
       _setLoading(false);
     }
@@ -64,9 +110,12 @@ class NotificationProvider extends ChangeNotifier {
 
   Future<void> markAsRead(int id) async {
     try {
-      await _apiClient.put('/notifications/$id/read');
+      if (!_isDummyId(id)) {
+        await _apiClient.put('/notifications/$id/read');
+      }
       final index = _notifications.indexWhere((n) => n.id == id);
       if (index != -1) {
+        final wasUnread = !_notifications[index].isRead;
         _notifications[index] = NotificationModel(
           id: _notifications[index].id,
           title: _notifications[index].title,
@@ -75,7 +124,9 @@ class NotificationProvider extends ChangeNotifier {
           isRead: true,
           createdAt: _notifications[index].createdAt,
         );
-        _unreadCount = (_unreadCount - 1).clamp(0, 1000);
+        if (wasUnread) {
+          _unreadCount = (_unreadCount - 1).clamp(0, 1000);
+        }
         notifyListeners();
       }
     } catch (e) {

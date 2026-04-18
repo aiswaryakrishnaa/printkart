@@ -14,6 +14,9 @@ class ProductService {
     String? type,
     String? search,
     bool popularOnly = false,
+    String? sortBy,
+    String? sortOrder,
+    String? status,
   }) async {
     final params = {
       'page': page.toString(),
@@ -22,6 +25,9 @@ class ProductService {
       if (type != null) 'type': type,
       if (search != null && search.isNotEmpty) 'search': search,
       if (popularOnly) 'isPopular': 'true',
+      if (sortBy != null && sortBy.isNotEmpty) 'sortBy': sortBy,
+      if (sortOrder != null && sortOrder.isNotEmpty) 'sortOrder': sortOrder,
+      if (status != null && status.isNotEmpty) 'status': status,
     };
     final response = await _apiClient.get('/products', queryParameters: params, requiresAuth: false);
     final data = response['data'];

@@ -104,13 +104,13 @@ exports.register = async (req, res, next) => {
 // Login User
 exports.login = async (req, res, next) => {
   try {
-    console.log('Login attempt:', { email: req.body.email, hasPassword: !!req.body.password });
+    console.log('Login attempt received');
     
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       // Get the first error message for better UX
       const firstError = errors.array()[0];
-      console.log('Validation errors:', errors.array());
+      console.log('Validation error on login request');
       return res.status(400).json({
         success: false,
         error: {
@@ -140,7 +140,7 @@ exports.login = async (req, res, next) => {
       });
     }
 
-    console.log('Looking for user with:', { email: email || null, phone: phone || null });
+    console.log('Looking up user for login');
 
     // Find user - fix the query to properly handle email or phone
     const whereClause = {};
@@ -154,12 +154,7 @@ exports.login = async (req, res, next) => {
       where: whereClause
     });
     
-    console.log('User found:', !!user);
-    if (user) {
-      console.log('User password hash (first 20 chars):', user.password ? user.password.substring(0, 20) + '...' : 'null');
-      console.log('Password hash length:', user.password ? user.password.length : 0);
-      console.log('Is password a bcrypt hash?', user.password ? user.password.startsWith('$2') : false);
-    }
+    console.log('User lookup complete:', !!user);
 
     if (!user) {
       return res.status(401).json({
@@ -172,23 +167,15 @@ exports.login = async (req, res, next) => {
     }
 
     // Check password
-    console.log('Comparing password. Input length:', password ? password.length : 0);
-    console.log('Input password value:', password ? `"${password}"` : 'null');
-    console.log('Stored password value:', user.password ? `"${user.password.substring(0, 50)}"` : 'null');
-    console.log('User object has comparePassword method?', typeof user.comparePassword === 'function');
+    console.log('Comparing login credentials');
     
     let isMatch = false;
     try {
       isMatch = await user.comparePassword(password);
-      console.log('Password match:', isMatch);
+      console.log('Password verification complete:', isMatch);
     } catch (error) {
       console.error('Error in comparePassword:', error);
-      console.error('Error stack:', error.stack);
       isMatch = false;
-    }
-    
-    if (!isMatch) {
-      console.log('Password mismatch! Make sure the password in database is properly hashed.');
     }
     
     if (!isMatch) {

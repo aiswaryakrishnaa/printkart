@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../models/customization_request.dart';
 import 'api_client.dart';
 
 class CustomizationService {
@@ -26,6 +27,7 @@ class CustomizationService {
     double? paperPrice,
     double? printingCharge,
     double? dieCutting,
+    bool dummyPaymentSucceeded = false,
   }) async {
     final fields = <String, String>{
       'productType': productType,
@@ -38,6 +40,9 @@ class CustomizationService {
     if (paperPrice != null) fields['paperPrice'] = paperPrice.toString();
     if (printingCharge != null) fields['printingCharge'] = printingCharge.toString();
     if (dieCutting != null) fields['dieCutting'] = dieCutting.toString();
+    if (dummyPaymentSucceeded) {
+      fields['dummyPaymentSucceeded'] = 'true';
+    }
 
     final files = filePath != null ? {'file': filePath} : null;
 
@@ -48,8 +53,13 @@ class CustomizationService {
     );
   }
 
-  Future<List<dynamic>> getMyCustomizations() async {
+  Future<List<CustomizationRequest>> fetchMyCustomizations() async {
     final response = await _apiClient.get('/customizations');
-    return response['data'] as List<dynamic>;
+    final data = response['data'];
+    if (data is! List) return [];
+    return data
+        .whereType<Map<String, dynamic>>()
+        .map(CustomizationRequest.fromJson)
+        .toList();
   }
 }

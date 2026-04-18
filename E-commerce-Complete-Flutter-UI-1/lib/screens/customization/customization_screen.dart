@@ -69,7 +69,10 @@ class _CustomizationScreenState extends State<CustomizationScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Request submitted successfully!")),
           );
-          Navigator.pop(context);
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            kMainShellRoute,
+            (route) => false,
+          );
         }
       } catch (e) {
         if (mounted) {

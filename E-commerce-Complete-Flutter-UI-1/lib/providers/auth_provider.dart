@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../models/api_exception.dart';
@@ -64,12 +66,13 @@ class AuthProvider extends ChangeNotifier {
   }) async {
     _setLoading(true);
     _lastError = null;
+    
     try {
       final response = await _apiClient.post(
         '/auth/register',
         body: {
           'fullName': fullName,
-          'email': email,
+          'email': email,  
           'phone': phone,
           'password': password,
         },
@@ -178,14 +181,22 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    try {
-      await _apiClient.post('/auth/logout', requiresAuth: true);
-    } catch (_) {
-      // ignore API error on logout
-    }
+    final access = _storage.accessToken;
+    final refresh = _storage.refreshToken;
+
+    // Clear locally first so the UI is not blocked by network latency or timeouts.
     await _storage.clearTokens();
     _user = null;
     notifyListeners();
+
+    if (access != null && access.isNotEmpty) {
+      unawaited(
+        _apiClient.logoutWithToken(
+          accessToken: access,
+          refreshToken: refresh,
+        ),
+      );
+    }
   }
 
   Future<void> _handleAuthResponse(Map<String, dynamic> response) async {
@@ -211,6 +222,7 @@ class AuthProvider extends ChangeNotifier {
       print('Profile loading failed: $error');
     }
   }
+  
 
   void _setLoading(bool value) {
     _loading = value;

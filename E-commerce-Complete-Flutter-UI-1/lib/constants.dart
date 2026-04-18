@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+/// Main app shell with bottom navigation ([InitScreen]). Kept separate from `/` (bootstrap).
+const String kMainShellRoute = '/main';
+
 const kPrimaryColor = Color(0xFFFF7643);
 const kPrimaryLightColor = Color(0xFFFFECDF);
 const kPrimaryGradientColor = LinearGradient(
